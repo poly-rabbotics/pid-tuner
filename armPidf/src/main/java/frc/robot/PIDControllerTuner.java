@@ -20,22 +20,22 @@ public class PIDControllerTuner {
         this.maxKChangePerSecond = maxKChangePerSecond;
     }
     public void update() {
-        double changeRequest = Math.pow(joy.getY(Hand.kLeft), 3) * maxKChangePerSecond;
-        if(joy.getAButton()) { //User wants to set Kf
+        //Use the joystick value to determine the request to increase or decrease a constant
+        double changeRequest = - Math.pow(joy.getY(Hand.kLeft), 3) * maxKChangePerSecond;
+        if(joy.getAButton()) { //A is pressed, so user wants to adjust Kf
             pid.setF(pid.getF() + changeRequest);
         }
-        if(joy.getBButton()) { //User wants to set Kp
+        if(joy.getBButton()) { //B is pressed, so user wants to adjust Kp
             pid.setP(pid.getP() + changeRequest);
         }
-        if(joy.getXButton()) { //User wants to set Kd
+        if(joy.getXButton()) { //X is pressed, so user wants to adjust Kd
             pid.setD(pid.getD() + changeRequest);
         }
-        if(joy.getYButton()) { //User wants to set Ki
+        if(joy.getYButton()) { //Y is pressed, so user wants to adjust Ki
             pid.setI(pid.getI() + changeRequest);
         }
-        reportState();
     }
-    private void reportState() {
+    public void reportState() {
         //Put all constants to the SmartDashboard. It's recommended that they are configured as graphs with respect to time
         SmartDashboard.putNumber("Kf", pid.getF());
         SmartDashboard.putNumber("Kp", pid.getP());

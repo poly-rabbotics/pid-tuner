@@ -33,7 +33,7 @@ public class Robot extends TimedRobot {
 
   VictorSP arm;
   Joystick joy0;
-  XboxController joy1;
+  XboxController joy1; //It is only guaranteed that it will work as expected if this one is XboxController
   DigitalInput topSwitch, bottomSwitch;
 
   Encoder armEncoder;
@@ -48,40 +48,22 @@ public class Robot extends TimedRobot {
     //Construct the arm (up/down) motor
     arm = new VictorSP(4);
     //Construct the two joysticks
-    joy0 = new Joystick(0);
-    joy1 = new XboxController(1);
+    joy0 = new Joystick(0);      //This joystick is for changing the setpoint
+    joy1 = new XboxController(1);//This joystick is for tuning the PID constants
 
-    armEncoder = new Encoder(6, 7); //set to actual port numbers A and B
-    armEncoder.setDistancePerPulse(0.5); // set to actual distance
+    armEncoder = new Encoder(5, 7); //set to actual port numbers A and B
+    armEncoder.setDistancePerPulse(0.26); //TODO: set to actual distance
 
-    armPid = new ArmPIDController(0.2, 0, 0, 1, armEncoder, arm);
-    tuner = new PIDControllerTuner(armPid, joy1);
-    armPid.enable();
+    //Start by setting all constants to 0 except for Kf. Kf is set to 0.2 initially.
+    armPid = new ArmPIDController(0, 0, 0, 0.2, armEncoder, arm); //This PIDController takes input from armEncoder to control arm
+    tuner = new PIDControllerTuner(armPid, joy1); //This tuner uses joy1 to adjust constants Kf, Kp, Kd, Ki
+    armPid.enable(); //let the PIDController start controlling the arm
   }
 
-  /**
-   * This function is called every robot packet, no matter the mode. Use
-   * this for items like diagnostics that you want ran during disabled,
-   * autonomous, teleoperated and test.
-   *
-   * <p>This runs after the mode specific periodic functions, but before
-   * LiveWindow and SmartDashboard integrated updating.
-   */
   @Override
   public void robotPeriodic() {
   }
 
-  /**
-   * This autonomous (along with the chooser code above) shows how to select
-   * between different autonomous modes using the dashboard. The sendable
-   * chooser code works with the Java SmartDashboard. If you prefer the
-   * LabVIEW Dashboard, remove all of the chooser code and uncomment the
-   * getString line to get the auto name from the text box below the Gyro
-   *
-   * <p>You can add additional auto modes by adding additional comparisons to
-   * the switch structure below with additional strings. If using the
-   * SendableChooser make sure to add them to the chooser code above as well.
-   */
   @Override
   public void autonomousInit() {
     m_autoSelected = m_chooser.getSelected();
@@ -90,12 +72,8 @@ public class Robot extends TimedRobot {
     System.out.println("Auto selected: " + m_autoSelected);
   }
 
-  /**
-   * This function is called periodically during autonomous.
-   */
   @Override
   public void autonomousPeriodic() {
-    
   }
 
   /**
@@ -103,19 +81,16 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    tuner.update();
+    tuner.update(); //adjust motor constants as requested
+    tuner.reportState(); //report to SmartDashboard, which is viewable in Shuffleboard.
 // ARM ANGLE
-
-    if(joy0.getRawButton(4)){ //button Y
-      if(topSwitch.get()){
-        armEncoder.reset();
-        //stops arm angle motor at top
-      }
-      else{
-        armPid.setSetpoint(0);
-      }
+    if(topSwitch.get()) {
+      armEncoder.reset(); //reset the total distance measurement to zero if top limit switch is pressed
     }
-    else if(joy0.getRawButton(1)){ //button A
+    if(joy0.getRawButton(4)){ //button Y is pressed, so raise arm
+      armPid.setSetpoint(0);
+    }
+    else if(joy0.getRawButton(1)){ //button A is pressed, so bring arm down
       armPid.setSetpoint(-90);
     }
   }
