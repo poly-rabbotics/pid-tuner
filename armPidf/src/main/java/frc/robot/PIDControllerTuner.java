@@ -12,7 +12,7 @@ public class PIDControllerTuner {
     public PIDControllerTuner(PIDController pid, XboxController joy) {
         this.pid = pid;
         this.joy = joy;
-        this.maxKChangePerSecond = 0.5;
+        this.maxKChangePerSecond = 0.15;
     }
     public PIDControllerTuner(PIDController pid, XboxController joy, double maxKChangePerSecond) {
         this.pid = pid;
@@ -20,9 +20,8 @@ public class PIDControllerTuner {
         this.maxKChangePerSecond = maxKChangePerSecond;
     }
     public void update() {
-        //Use the joystick value to determine the request to increase or decrease a constant
-        double changeRequest = - Math.pow(joy.getY(Hand.kLeft), 3) * maxKChangePerSecond;
-        if(joy.getAButton()) { //A is pressed, so user wants to adjust Kf
+        double changeRequest = - curve(joy.getY(Hand.kLeft)) * maxKChangePerSecond / 50;
+        if(joy.getAButton()) { //A is pressed, so user wants to set Kf
             pid.setF(pid.getF() + changeRequest);
         }
         if(joy.getBButton()) { //B is pressed, so user wants to adjust Kp
@@ -36,13 +35,17 @@ public class PIDControllerTuner {
         }
     }
     public void reportState() {
-        //Put all constants to the SmartDashboard. It's recommended that they are configured as graphs with respect to time
+        //Put all constants to the SmartDashboard.
         SmartDashboard.putNumber("Kf", pid.getF());
         SmartDashboard.putNumber("Kp", pid.getP());
         SmartDashboard.putNumber("Kd", pid.getD());
         SmartDashboard.putNumber("Ki", pid.getI());
-
-        //Put error to SmartDashboard. Recommended that they are graphs with respect to time
+        //Put current setpoint to the SmartDashboard.
+        SmartDashboard.putNumber("Setpoint", pid.getSetpoint());
+        //Put error to SmartDashboard.
         SmartDashboard.putNumber("Error", pid.getError());
+    }
+    private double curve(double input) {
+        return Math.pow(input, 2) * input / Math.abs(input);
     }
 }
