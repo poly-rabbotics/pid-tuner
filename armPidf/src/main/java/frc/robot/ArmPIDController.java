@@ -14,6 +14,6 @@ class ArmPIDController extends PIDController {
     @Override
     protected double calculateFeedForward() {
         double radians = getSetpoint() / 180 * Math.PI; //TODO: change to a faster polynomial approximation
-        return -Math.sin(radians); //return radians - Math.pow(radians, 3)/6 + Math.pow(radians, 5)/120;
+        return -Math.sin(radians) * getF(); //return radians - Math.pow(radians, 3)/6 + Math.pow(radians, 5)/120;
     }
 }
